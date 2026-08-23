@@ -1,21 +1,18 @@
 [project]
-name = "fastapi-mongodb"
+name = "flask-mongodb"
 version = "0.1.0"
-description = "Add your description here"
+description = "Flask MongoDB application (migrated from FastAPI)"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
-    "fastapi[standard]>=0.115.8",
-    "httptools>=0.6.4",
-    "httpx>=0.28.1",
-    "inline-snapshot>=0.18.2",
-    "motor>=3.6.0",
-    "pydantic>=2.11.0a1",
-    "pydantic-settings>=2.7.1",
-    "pytest>=8.3.4",
-    "pytest-cov>=6.0.0",
-    "rich>=13.9.4",
-    "ruff>=0.9.4",
-    "uvicorn>=0.34.0",
-    "uvloop>=0.21.0",
+    "flask>=3.0.0",
+    "gunicorn>=21.0.0",
+    "pymongo>=4.6.0",
+    "pydantic>=2.5.0,<2.11",
+    "pydantic-settings>=2.1.0,<2.8",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "rich>=13.0.0",
+    "ruff>=0.1.0",
+    "inline-snapshot>=0.18.0",
 ]

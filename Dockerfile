@@ -55,4 +55,7 @@ COPY .env greens/
 
 RUN python -V
 RUN python -Im site
-RUN python -Ic 'import uvicorn'
+RUN python -Ic 'import flask'
+
+# Run with gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "greens.main:app"]

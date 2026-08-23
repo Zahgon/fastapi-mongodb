@@ -1,51 +1,47 @@
-from fastapi import APIRouter
-from starlette.status import HTTP_201_CREATED
+from flask import Blueprint, request, jsonify
 
 from greens.config import settings as global_settings
-from greens.routers.exceptions import NotFoundHTTPException
-from greens.schemas.vegs import Document, DocumentResponse, ObjectIdField
+from greens.routers.exceptions import NotFoundException
+from greens.schemas.vegs import Document, DocumentResponse
 from greens.services.repository import create_document, retrieve_document
 
 collection = global_settings.mongodb_collection
 
-router = APIRouter()
+bp = Blueprint('vegs', __name__)
 
 
-@router.post(
-    "",
-    status_code=HTTP_201_CREATED,
-    response_description="Document created",
-    response_model=DocumentResponse,
-)
-async def add_document(payload: Document):
+@bp.route("", methods=["POST"])
+def add_document():
     """
+    Create a new document.
 
-    :param payload:
-    :return:
+    Returns:
+        JSON response with created document ID.
     """
     try:
-        # payload = jsonable_encoder(payload)
-        document = await create_document(payload, collection)
-        return {"id": str(document.inserted_id)}
+        payload_data = request.get_json()
+        payload = Document(**payload_data)
+        document = create_document(payload, collection)
+        response = DocumentResponse(id=document.inserted_id)
+        return jsonify(response.model_dump()), 201
     except ValueError as exception:
-        raise NotFoundHTTPException(msg=str(exception)) from exception
+        raise NotFoundException(msg=str(exception)) from exception
 
 
-@router.get(
-    "/{object_id}",
-    response_description="Document retrieved",
-    response_model=DocumentResponse,
-)
-async def get_document(object_id: ObjectIdField):
+@bp.route("/<object_id>", methods=["GET"])
+def get_document(object_id: str):
     """
+    Retrieve a document by ID.
 
-    :param object_id:
-    :return:
+    Args:
+        object_id: MongoDB ObjectId as string.
+
+    Returns:
+        JSON response with document data.
     """
     try:
-        return await retrieve_document(object_id, collection)
+        document = retrieve_document(object_id, collection)
+        response = DocumentResponse(id=document["id"])
+        return jsonify(response.model_dump())
     except (ValueError, TypeError) as exception:
-        raise NotFoundHTTPException(msg=str(exception)) from exception
-
-
-# TODO: PUT for replace aka set PATCH for update ?
+        raise NotFoundException(msg=str(exception)) from exception

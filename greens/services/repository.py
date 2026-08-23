@@ -1,53 +1,74 @@
 from bson import ObjectId
+from flask import g
 from pymongo.errors import WriteError
 from pymongo.results import InsertOneResult
 
-import greens.main as greens
-from greens.routers.exceptions import AlreadyExistsHTTPException
+from greens.routers.exceptions import AlreadyExistsException
 
 
-async def document_id_helper(document: dict) -> dict:
+def document_id_helper(document: dict) -> dict:
+    """Convert MongoDB _id to id field."""
     document["id"] = document.pop("_id")
     return document
 
 
-async def retrieve_document(document_id: str, collection: str) -> dict:
+def retrieve_document(document_id: str, collection: str) -> dict:
     """
+    Retrieve a document from MongoDB by ID.
 
-    :param document_id:
-    :param collection:
-    :return:
+    Args:
+        document_id: The document's ObjectId as string.
+        collection: Collection name.
+
+    Returns:
+        Document dict with id field.
+
+    Raises:
+        ValueError: If document not found.
     """
     document_filter = {"_id": ObjectId(document_id)}
-    if document := await greens.app.state.mongo_collection[collection].find_one(document_filter):
-        return await document_id_helper(document)
+    document = g.mongo_collection[collection].find_one(document_filter)
+    if document:
+        return document_id_helper(document)
     else:
         raise ValueError(f"No document found for {document_id=} in {collection=}")
 
 
-async def create_document(document, collection: str) -> InsertOneResult:
+def create_document(document, collection: str) -> InsertOneResult:
     """
+    Create a new document in MongoDB.
 
-    :param document:
-    :param collection:
-    :return:
+    Args:
+        document: Pydantic model to insert.
+        collection: Collection name.
+
+    Returns:
+        InsertOneResult from MongoDB.
+
+    Raises:
+        AlreadyExistsException: On write error.
     """
     try:
-        document: InsertOneResult = await greens.app.state.mongo_collection[collection].insert_one(
+        result: InsertOneResult = g.mongo_collection[collection].insert_one(
             document.model_dump()
         )
-        return document
+        return result
     except WriteError as e:
-        # TODO: this not make sense as id from mongo will be always unique if we not pass it
-        raise AlreadyExistsHTTPException(msg=str(e)) from e
+        raise AlreadyExistsException(msg=str(e)) from e
 
 
-async def get_mongo_meta() -> dict:
-    list_databases = await greens.app.state.mongo_client.list_database_names()
+def get_mongo_meta() -> dict:
+    """
+    Get MongoDB server metadata.
+
+    Returns:
+        Dict with version, databases, and collections info.
+    """
+    list_databases = g.mongo_client.list_database_names()
     list_of_collections = {}
     for db in list_databases:
-        list_of_collections[db] = await greens.app.state.mongo_client[db].list_collection_names()
-    mongo_meta = await greens.app.state.mongo_client.server_info()
+        list_of_collections[db] = g.mongo_client[db].list_collection_names()
+    mongo_meta = g.mongo_client.server_info()
     return {
         "version": mongo_meta["version"],
         "databases": list_databases,

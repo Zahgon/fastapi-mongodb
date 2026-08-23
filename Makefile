@@ -4,11 +4,11 @@ help: ## Show this help
 
 .PHONY: build-app
 build-app:	## Build project with compose
-	docker build . -t fastapi-mongodb-ubuntu-app:latest
+	docker build . -t flask-mongodb-ubuntu-app:latest
 
 .PHONY: build-oracle-linux-app
 build-oracle-linux-app:	## Build project with compose on oracle linux
-	docker build . --file DockerfileOracleLinux -t fastapi-mongodb-oracle-app:latest
+	docker build . --file DockerfileOracleLinux -t flask-mongodb-oracle-app:latest
 
 .PHONY: up
 up:	## Run project with compose
